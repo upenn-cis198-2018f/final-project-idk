@@ -5,3 +5,4 @@ authors = ["Peter <choupete@github.com>"]
 
 [dependencies]
 regex = "1.0"
+libc  = "*"
