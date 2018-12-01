@@ -1,10 +1,14 @@
-use regex::Regex;
 extern crate regex;
+extern crate chrono;
+
+use regex::Regex;
 use std::io::{self, Read};
 use std::fs::File;
 extern crate libc;
 use std::mem;
+
 mod keys;
+mod parser;
 
 // struct for input event
 #[repr(C)]
@@ -25,7 +29,7 @@ fn main() {
     let device = File::open(device_file).unwrap();
 
     let buf: [u8; 24] = unsafe{mem::zeroed()};
-    
+
     let text : String = listen_key(device, buf);
 
     println!("FINAL OUTPUT IS: {}", text);
@@ -42,7 +46,7 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
     	device.read(&mut buf).unwrap();
 
     	let event : InputEvent = unsafe {mem::transmute(buf)};
-    	
+
     	if event.type_ == (1 as u16) {
     		if event.value == (1 as i32) {
     			let key = keys::KEY_NAMES[event.code as usize];
@@ -67,7 +71,7 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
     				if start {
     					if key == "<Backspace>" {
     						// need to check if there is a character to backspace before deleting
-    						let curr_len = agg_string.chars().count(); 
+    						let curr_len = agg_string.chars().count();
     						if curr_len > 0 {
     							agg_string.truncate(curr_len - 1);
     						}
