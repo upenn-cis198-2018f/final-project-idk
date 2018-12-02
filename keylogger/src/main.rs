@@ -1,14 +1,10 @@
-extern crate regex;
-extern crate chrono;
-
 use regex::Regex;
+extern crate regex;
 use std::io::{self, Read};
 use std::fs::File;
 extern crate libc;
 use std::mem;
-
 mod keys;
-mod parser;
 
 fn main() {
 
@@ -23,15 +19,9 @@ fn main() {
 
         let text : String = listen_key(device, buf);
 
-<<<<<<< HEAD
         // get parsing information and then send to calendar
 
     }
-=======
-    let buf: [u8; 24] = unsafe{mem::zeroed()};
-
-    let text : String = listen_key(device, buf);
->>>>>>> 2b3278f08b0f2e9072dab5cff5191566852bba4b
 
 }
 
@@ -46,13 +36,8 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
     	device.read(&mut buf).unwrap();
 
     	let event : InputEvent = unsafe {mem::transmute(buf)};
-<<<<<<< HEAD
     	
     	if event.my_type == (1 as u16) {
-=======
-
-    	if event.type_ == (1 as u16) {
->>>>>>> 2b3278f08b0f2e9072dab5cff5191566852bba4b
     		if event.value == (1 as i32) {
     			let key = keys::KEY_NAMES[event.code as usize];
     			if key == "/" {
@@ -75,7 +60,7 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
     				if start {
     					if key == "<Backspace>" {
     						// need to check if there is a character to backspace before deleting
-    						let curr_len = agg_string.chars().count();
+    						let curr_len = agg_string.chars().count(); 
     						if curr_len > 0 {
     							agg_string.truncate(curr_len - 1);
     						}
@@ -107,7 +92,6 @@ fn get_device_file() -> Result<String, io::Error> {
 
     Ok(filename)
 }
-<<<<<<< HEAD
 
 // struct for input event
 #[repr(C)]
@@ -118,5 +102,3 @@ pub struct InputEvent {
     pub code: u16,
     pub value: i32
 }
-=======
->>>>>>> 2b3278f08b0f2e9072dab5cff5191566852bba4b
