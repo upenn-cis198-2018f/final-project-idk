@@ -5,6 +5,7 @@ use std::fs::File;
 extern crate libc;
 use std::mem;
 mod keys;
+mod events;
 
 fn main() {
 
