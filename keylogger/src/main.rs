@@ -1,41 +1,29 @@
-#[macro_use]
-extern crate lazy_static;
-
-extern crate regex;
-extern crate chrono;
-
 use regex::Regex;
+extern crate regex;
 use std::io::{self, Read};
 use std::fs::File;
 extern crate libc;
 use std::mem;
-
 mod keys;
-mod parser;
-
-// struct for input event
-#[repr(C)]
-pub struct InputEvent {
-    tv_sec: isize,
-    tv_usec: isize,
-    pub type_: u16,
-    pub code: u16,
-    pub value: i32
-}
+mod events;
 
 fn main() {
 
-    let device_file = match get_device_file() {
-    	Ok(x) => x,
-    	Err(e) => panic!("ERROR: Device File Not Found, {}", e)
-    };
-    let device = File::open(device_file).unwrap();
+    loop {
 
-    let buf: [u8; 24] = unsafe{mem::zeroed()};
+        let device_file = match get_device_file() {
+        Ok(x) => x,
+        Err(e) => panic!("ERROR: Device File Not Found, {}", e)
+        };
+        let device = File::open(device_file).unwrap();
+        let buf: [u8; 24] = unsafe{mem::zeroed()};
 
-    let text : String = listen_key(device, buf);
+        let text : String = listen_key(device, buf);
 
-    println!("FINAL OUTPUT IS: {}", text);
+        // get parsing information and then send to calendar
+
+    }
+
 }
 
 fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
@@ -50,10 +38,9 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
 
     	let event : InputEvent = unsafe {mem::transmute(buf)};
 
-    	if event.type_ == (1 as u16) {
+    	if event.my_type == (1 as u16) {
     		if event.value == (1 as i32) {
     			let key = keys::KEY_NAMES[event.code as usize];
-    			println!("MY KEY IS {}", key);
     			if key == "/" {
     				agg_escape.push_str(&"/".to_string());
     				if agg_escape == "//".to_string() {
@@ -78,11 +65,10 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
     						if curr_len > 0 {
     							agg_string.truncate(curr_len - 1);
     						}
-    					} else {
+    					} else if key.to_string().chars().count() < 2 {
     						agg_string.push_str(&key.to_string());
     					}
-    			}
-    			println!("AGGREGATED: {}", agg_string);
+    	           }
     			agg_escape = "".to_string(); // reset escape if not double "//"
     			}
     		}
@@ -106,4 +92,14 @@ fn get_device_file() -> Result<String, io::Error> {
     filename.push_str(event);
 
     Ok(filename)
+}
+
+// struct for input event
+#[repr(C)]
+pub struct InputEvent {
+    tv_sec: isize,
+    tv_usec: isize,
+    pub my_type: u16,
+    pub code: u16,
+    pub value: i32
 }

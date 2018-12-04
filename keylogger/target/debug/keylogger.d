@@ -1,1 +1,0 @@
-/home/jpowe/projects/rust/final-project-idk/keylogger/target/debug/keylogger: /home/jpowe/projects/rust/final-project-idk/keylogger/src/keys.rs /home/jpowe/projects/rust/final-project-idk/keylogger/src/main.rs /home/jpowe/projects/rust/final-project-idk/keylogger/src/parser.rs
