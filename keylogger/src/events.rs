@@ -34,6 +34,7 @@ impl CalHub {
         let mut event = Event::default();
         event.start = Some(event_date);
         event.end = Some(end_date);
+        event.location = cal_event.location;
 
         event.description = Some(cal_event.desc);
         event.summary = Some("Event Creation".to_string());
