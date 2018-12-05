@@ -17,31 +17,35 @@ pub struct CalHub {
 
 impl CalHub {
     pub fn create_event<T: super::notification::Notifyer>(&self, cal_event : super::parser::CalendarEvent, notes: &T) {
+
+        //Regularizing dates and durations, with the default duration of 1 hour
         let start = cal_event.start_time.to_rfc3339();
         let end = match cal_event.end_time {
             Some(time) => time.to_rfc3339(),
             None => (cal_event.start_time + chrono::Duration::hours(1)).to_rfc3339()
         };
-
         let event_date = EventDateTime{date_time: Some(start),
                                            time_zone: Some("America/Atikokan".to_string()),
                                            date: None};
-
         let end_date = EventDateTime{date_time: Some(end),
                                          time_zone: Some("America/Atikokan".to_string()),
                                          date: None};
 
+        //Creating the event itself
         let mut event = Event::default();
         event.start = Some(event_date);
         event.end = Some(end_date);
         event.location = cal_event.location;
-
         event.description = Some(cal_event.desc);
         event.summary = Some("RustCal: New Event".to_string());
+
+        //inserts event into primary calendar (Could potentially be made more interesting in the future)
         let res = self.hub.events().insert(event, "primary").doit();
         match res {
             Ok(response) => {
                 let target = response.0.status;
+
+                // Utilizes the Notifyer as the first notification method, then defaults to printing
                 let notification_res = if target.is_success() {
                     notes.notify_success()
                 } else {
@@ -67,6 +71,7 @@ fn read_client_secret(file: &str) -> ApplicationSecret {
     read_application_secret(Path::new(&file)).unwrap()
 }
 
+//Creates the initial calendar hub with the necessary secrets and authentication, mostly boilerplate
 pub fn create_hub() -> CalHub {
     const CLIENT_SECRET_FILE: &str = "client_id.json";
     let secret: ApplicationSecret = read_client_secret(CLIENT_SECRET_FILE);

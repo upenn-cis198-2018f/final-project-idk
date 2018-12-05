@@ -1,3 +1,7 @@
+//Generalized notifyer class meant to allow for different methods
+
+//We tried with popup notifications, but ran into cross platform challenges
+
 pub trait Notifyer {
     fn notify_success(&self) -> Result<(), String>;
     fn notify_failure(&self) -> Result<(), String>;
