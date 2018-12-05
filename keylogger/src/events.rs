@@ -2,10 +2,7 @@ extern crate hyper;
 extern crate hyper_rustls;
 extern crate yup_oauth2 as oauth2;
 extern crate google_calendar3 as calendar3;
-extern crate notify_rust;
 
-use events::notify_rust::{Notification, Timeout, server::NotificationServer};
-use std::thread;
 use std::path::Path;
 use events::calendar3::{ EventDateTime, Event, CalendarHub};
 use std::default::Default;
@@ -19,7 +16,7 @@ pub struct CalHub {
 }
 
 impl CalHub {
-    pub fn create_event(&self, cal_event : super::parser::CalendarEvent) {
+    pub fn create_event<T: super::notification::Notifyer>(&self, cal_event : super::parser::CalendarEvent, notes: &T) {
         let start = cal_event.start_time.to_rfc3339();
         let end = match cal_event.end_time {
             Some(time) => time.to_rfc3339(),
@@ -45,18 +42,9 @@ impl CalHub {
             Ok(response) => {
                 let target = response.0.status;
                 let notification_res = if target.is_success() {
-                    println!("Created new event!");
-                    Notification::new()
-                    .summary("Event Creation")
-                    .body("Event Created Successfully")
-                    .timeout(Timeout::Never)
-                    .show()
+                    notes.notify_success()
                 } else {
-                     Notification::new()
-                    .summary("Event Creation")
-                    .body("Event Creation Unsuccessful")
-                    .timeout(Timeout::Never)
-                    .show()
+                    notes.notify_failure()
                 };
                 match notification_res {
                     Ok(_) => {
@@ -89,7 +77,5 @@ pub fn create_hub() -> CalHub {
                                     hyper::net::HttpsConnector::new(
                                         hyper_rustls::TlsClient::new())), auth);
 
-    let server = NotificationServer::new();
-    thread::spawn(move || NotificationServer::start(&server, |notification| println!("{:#?}", notification)));
     CalHub {hub}
 }
