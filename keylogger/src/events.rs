@@ -14,14 +14,14 @@ use std::option::Option;
 use events::hyper::status::{StatusClass, StatusCode};
 use events::hyper::client::response::Response;
 
-struct CalHub {
+pub struct CalHub {
     hub: calendar3::CalendarHub<hyper::Client,
          Authenticator<DefaultAuthenticatorDelegate,
          MemoryStorage, hyper::Client>>,
 }
 
 impl CalHub {
-    fn create_event(&self, cal_event : super::parser::CalendarEvent) {
+    pub fn create_event(&self, cal_event : super::parser::CalendarEvent) {
         let date = cal_event.datetime.to_rfc3339();
         let end = (cal_event.datetime + chrono::Duration::hours(1)).to_rfc3339();
 
@@ -68,7 +68,7 @@ fn read_client_secret(file: String) -> ApplicationSecret {
     read_application_secret(Path::new(&file)).unwrap()
 }
 
-fn create_hub() -> CalHub {
+pub fn create_hub() -> CalHub {
     const CLIENT_SECRET_FILE: &'static str = "client_id.json";
     let secret: ApplicationSecret = read_client_secret(CLIENT_SECRET_FILE.to_string());
 

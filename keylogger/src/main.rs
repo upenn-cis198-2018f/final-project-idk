@@ -14,9 +14,8 @@ mod events;
 mod parser;
 
 fn main() {
-
+    let hub = events::create_hub();
     loop {
-
         // we get the device file to read from
         let device_file = match get_device_file() {
             Ok(x) => x,
@@ -37,7 +36,10 @@ fn main() {
         let text : String = listen_key(device, buf);
 
         // get parsing information and then send to calendar
-        println!("{}", text);
+        match parser::parse(text) {
+            Some(calevent) => hub.create_event(calevent),
+            None => println!("didn't parse\n")
+        }
     }
 
 }

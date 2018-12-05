@@ -121,7 +121,7 @@ fn transform_date(input : DateTime<Local>, elt : DateTimeElt) -> DateTime<Local>
 //     Description, Date, Location
 // }
 
-pub fn parse(input : &str) -> Option<CalendarEvent> {
+pub fn parse(input : String) -> Option<CalendarEvent> {
     let mut desc = String::with_capacity(input.len());
     let mut datetime = Local::today().and_hms(9, 0, 0);
 
