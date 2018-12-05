@@ -16,7 +16,9 @@ The code is made up of 4 major portions:
   * It acts as a key logger, meaning that it is capable of detecting input in any window as long as the program is running
 * The parser
   * This system parses the string from the key logger into an event which can be used by google calendar
+  * Uses basic heuristics to determine a start time, end time, location, and description of an event based on user input
   * Extremely modular and therefore easy to update with increasingly complex parser models
+  * All features are unit tested
 * The server
   * This portion of the system is responsible for all notifications issued by the system, both to google calendar and otherwise
   * Interacts with google's API, including Oauth2, as well as with the system.
@@ -27,8 +29,8 @@ The code is made up of 4 major portions:
   
 ## Team
 
-Eric Frank
+Eric Frank: Server
 
-John Powell
+John Powell: Parser
 
-Peter Chou
+Peter Chou: Logger
