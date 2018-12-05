@@ -427,9 +427,9 @@ mod tests {
 
     #[test]
     fn date_end_time() {
-        test_with_addl_fields("test asdf at the park 10-12-2019 10p to 10:30p garbage for fun",
-                              "2019-10-12T22:00:00+00:00".to_string(),
-                              "2019-10-12T22:30:00+00:00".to_string(),
+        test_with_addl_fields("test asdf at the park feb2 10p to 10:30p garbage for fun",
+                              "2018-02-02T22:00:00+00:00".to_string(),
+                              "2018-02-02T22:30:00+00:00".to_string(),
                               "test asdf",
                               "the park",
         );
