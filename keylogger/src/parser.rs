@@ -444,4 +444,14 @@ mod tests {
                               "greens",
         );
     }
+
+    #[test]
+    fn date_end_time_random_to() {
+        test_with_addl_fields("take jenny to park at greens tomorrow 6am to 10:30p garbage for fun",
+                              Local::today().succ().and_hms(6, 0, 0).to_rfc3339(),
+                              Local::today().succ().and_hms(22, 30, 0).to_rfc3339(),
+                              "take jenny to park",
+                              "greens",
+        );
+    }
 }

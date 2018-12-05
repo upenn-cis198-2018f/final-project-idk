@@ -37,7 +37,7 @@ impl CalHub {
         event.location = cal_event.location;
 
         event.description = Some(cal_event.desc);
-        event.summary = Some("Event Creation".to_string());
+        event.summary = Some("RustCal: New Event".to_string());
         let res = self.hub.events().insert(event, "primary").doit();
         match res {
             Ok(response) => {
