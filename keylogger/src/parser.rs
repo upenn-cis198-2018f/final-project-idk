@@ -1,6 +1,4 @@
-extern crate regex;
-
-use chrono::{ prelude::* };
+use chrono::prelude::*;
 use regex::{ Regex };
 
 pub struct CalendarEvent {
@@ -19,6 +17,7 @@ enum DateTimeElt {
 fn parse_as_time(token : String) -> Option<DateTimeElt> {
     let token = token.to_lowercase();
 
+    // Looks for basic strings: "today", "tomorrow", and weekdays
     if token.eq("today") {
         return Some(DateTimeElt::Today)
     } else if token.eq("tomorrow") {
@@ -27,12 +26,14 @@ fn parse_as_time(token : String) -> Option<DateTimeElt> {
         return Some(DateTimeElt::RelativeWeekday(weekday))
     }
 
+    // Statically compiles regexes to decrease run-time overhead
     lazy_static! {
         static ref AM : Regex = Regex::new(r"^(\d{1, 2})(:(\d{2}))?am?$").unwrap();
         static ref PM : Regex = Regex::new(r"^(\d{1, 2})(:(\d{2}))?pm?$").unwrap();
         static ref DATE : Regex = Regex::new(r"^(\d{1, 2})[-/](\d{1, 2})([-/]\d{4})?$").unwrap();
     }
 
+    // Parses for a time of the form __am or __:__am
     if let Some(caps) = AM.captures(token.as_str()) {
         let hours = caps.get(1).unwrap().as_str().parse::<u32>().unwrap();
         if hours >= 1 && hours <= 12 {
@@ -47,6 +48,7 @@ fn parse_as_time(token : String) -> Option<DateTimeElt> {
         }
     }
 
+    // Parses for a time of the form __pm or __:__pm
     if let Some(caps) = PM.captures(token.as_str()) {
         let hours = caps.get(1).unwrap().as_str().parse::<u32>().unwrap();
         if hours >= 1 && hours <= 12 {
@@ -61,6 +63,7 @@ fn parse_as_time(token : String) -> Option<DateTimeElt> {
         }
     }
 
+    // Parses for a date of the form mm/dd or mm/dd/yyyy
     if let Some(caps) = DATE.captures(token.as_str()) {
         let month = caps.get(1).unwrap().as_str().parse::<u32>().unwrap();
         let day = caps.get(2).unwrap().as_str().parse::<u32>().unwrap();

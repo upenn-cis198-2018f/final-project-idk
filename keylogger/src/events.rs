@@ -15,7 +15,7 @@ use events::calendar3::CalendarHub;
 use std::option::Option;
 use events::hyper::status::{StatusClass, StatusCode};
 use events::hyper::client::response::Response;
- 
+
 struct CalHub {
     hub: calendar3::CalendarHub<hyper::Client, Authenticator<DefaultAuthenticatorDelegate, MemoryStorage, hyper::Client>>,
 }
@@ -25,7 +25,7 @@ impl CalHub {
     fn create_hub() -> CalHub {
         const CLIENT_SECRET_FILE: &'static str = "client_id.json";
         let secret: ApplicationSecret = read_client_secret(CLIENT_SECRET_FILE.to_string());
-        
+
         let auth = Authenticator::new(&secret, DefaultAuthenticatorDelegate,
                                 hyper::Client::with_connector(hyper::net::HttpsConnector::new(hyper_rustls::TlsClient::new())),
                                 <MemoryStorage as Default>::default(), None);
