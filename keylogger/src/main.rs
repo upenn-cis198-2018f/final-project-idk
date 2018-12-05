@@ -67,9 +67,9 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
         // we match our events to specific keys, checking for escape characters
         if event.my_type == (1 as u16) && event.value == (1 as i32) {
             let key = keys::KEY_NAMES[event.code as usize];
-            if key == "/" {
-                agg_escape.push_str(&"/".to_string());
-                if agg_escape == "\\" {
+            if key == "\\" {
+                agg_escape.push_str(&"\\".to_string());
+                if agg_escape == "\\\\".to_string() {
 
                     if !start {
                         start = true;

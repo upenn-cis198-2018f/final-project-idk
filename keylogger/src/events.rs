@@ -4,7 +4,8 @@ extern crate yup_oauth2 as oauth2;
 extern crate google_calendar3 as calendar3;
 extern crate notify_rust;
 
-use events::notify_rust::{Notification, Timeout};
+use events::notify_rust::{Notification, Timeout, server::NotificationServer};
+use std::thread;
 use std::path::Path;
 use events::calendar3::{ EventDateTime, Event, CalendarHub};
 use std::default::Default;
@@ -41,7 +42,7 @@ impl CalHub {
             Ok(response) => {
                 let target = response.0.status;
                 let notification_res = if target.is_success() {
-                    println!("HERE!!!!");
+                    println!("Created new event!");
                     Notification::new()
                     .summary("Event Creation")
                     .body("Event Created Successfully")
@@ -83,6 +84,9 @@ pub fn create_hub() -> CalHub {
                             <MemoryStorage as Default>::default(), None);
     let hub = CalendarHub::new(hyper::Client::with_connector(
                                     hyper::net::HttpsConnector::new(
-                                    hyper_rustls::TlsClient::new())), auth);
+                                        hyper_rustls::TlsClient::new())), auth);
+
+    // let server = NotificationServer::new();
+    // thread::spawn(move || NotificationServer::start(&server, |notification| println!("{:#?}", notification)));
     CalHub {hub}
 }
