@@ -12,8 +12,10 @@ use std::mem;
 mod keys;
 mod events;
 mod parser;
+mod notification;
 
 fn main() {
+    let notes = notification::TermOut;
     let hub = events::create_hub();
     loop {
         // we get the device file to read from
@@ -37,7 +39,7 @@ fn main() {
 
         // get parsing information and then send to calendar
         match parser::parse(&text) {
-            Some(calevent) => hub.create_event(calevent),
+            Some(calevent) => hub.create_event(calevent, &notes),
             None => println!("didn't parse\n")
         }
     }
@@ -69,7 +71,7 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
             let key = keys::KEY_NAMES[event.code as usize];
             if key == "\\" {
                 agg_escape.push_str(&"\\".to_string());
-                if agg_escape == "\\\\".to_string() {
+                if agg_escape == "\\\\" {
 
                     if !start {
                         start = true;
