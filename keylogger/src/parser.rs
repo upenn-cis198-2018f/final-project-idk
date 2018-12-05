@@ -165,12 +165,10 @@ pub fn parse(input : &str) -> Option<CalendarEvent> {
             Some(datetime_elt) => {
                 match parsing_target {
                     ParseTarget::EndDate => {
-                        println!("in this bitch");
                         end_time = transform_date(end_time, &datetime_elt);
                         changed_end_time = true;
                     }
                     _ => {
-                        println!("in this bitch2");
                         parsing_target = ParseTarget::StartDate;
                         start_time = transform_date(start_time, &datetime_elt);
                         changed_start_time = true;
@@ -180,6 +178,7 @@ pub fn parse(input : &str) -> Option<CalendarEvent> {
                     }
                 };
             },
+
             None => {
                 if token == "at" {
                     // The keyword "at" triggers us to begin writing to the location field
@@ -187,7 +186,6 @@ pub fn parse(input : &str) -> Option<CalendarEvent> {
                     continue
                 }
                 if token == "to" && changed_start_time {
-                    println!("in this bitch3");
                     // If we have already begun parsing a start time and we see the token
                     // "to", begin parsing an end time
                     parsing_target = ParseTarget::EndDate;
