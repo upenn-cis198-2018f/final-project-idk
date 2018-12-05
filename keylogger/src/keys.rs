@@ -1,4 +1,3 @@
-
 const MAX_KEYS: u16 = 112;
 
 // Unknown key string
