@@ -4,6 +4,7 @@ use regex::{ Regex };
 pub struct CalendarEvent {
     pub datetime: DateTime<Local>,
     pub desc: String,
+    pub location: Option<String>
 }
 
 enum DateTimeElt {
@@ -31,7 +32,7 @@ fn parse_as_time(token : &str) -> Option<DateTimeElt> {
         static ref AM : Regex = Regex::new(r"^(\d{1, 2})(:(\d{2}))?am?$").unwrap();
         static ref PM : Regex = Regex::new(r"^(\d{1, 2})(:(\d{2}))?pm?$").unwrap();
         static ref DATE : Regex = Regex::new(r"^(\d{1, 2})[-/](\d{1, 2})([-/]\d{4})?$").unwrap();
-        // static ref DATE2 : Regex = Regex::new(r"^([a-z]+)(\d{1, 2})$").unwrap();
+        static ref DATE2 : Regex = Regex::new(r"^([a-z]+)(\d{1, 2})$").unwrap();
     }
 
     // Parses for a time of the form __am or __:__am
@@ -117,36 +118,58 @@ fn transform_date(input : DateTime<Local>, elt : &DateTimeElt) -> DateTime<Local
     }
 }
 
-// enum ParseTarget {
-//     Description, Date, Location
-// }
+enum ParseTarget {
+    Description, Date, Location
+}
 
 pub fn parse(input : &str) -> Option<CalendarEvent> {
+    // Empty strings to hold return values
     let mut desc = String::with_capacity(input.len());
+    let mut location = String::new();
     let mut datetime = Local::today().and_hms(9, 0, 0);
 
-    let mut parsing_date = false;
+    let mut parsing_target = ParseTarget::Description;
+    let mut changed_time = false;
 
     for token in input.split_whitespace() {
+        // Attempts to parse each token as a time
+        // Unsuccesful parses are added to location/description
         match parse_as_time(&token.to_string()) {
             Some(datetime_elt) => {
-                parsing_date = true;
-                datetime = transform_date(datetime, &datetime_elt)
+                parsing_target = ParseTarget::Date;
+                datetime = transform_date(datetime, &datetime_elt);
+                changed_time = true;
             },
             None => {
-                if parsing_date { continue };
-                desc.push_str(token);
-                desc.push(' ')
+                if token == "at" {
+                    parsing_target = ParseTarget::Location;
+                    continue
+                }
+                match parsing_target {
+                    ParseTarget::Description => {
+                        desc.push_str(token);
+                        desc.push(' ')
+                    },
+                    ParseTarget::Location => {
+                        location.push_str(token);
+                        location.push(' ')
+                    }
+                    ParseTarget::Date => continue,
+                }
             }
         }
     }
 
-    if parsing_date {
-        desc.pop();
-        Some(CalendarEvent { datetime , desc })
+    if changed_time {
+        desc.pop(); // Remove extra ' ' from end
+        if location.is_empty() {
+            Some(CalendarEvent { datetime, desc, location : None })
+        } else {
+            location.pop();
+            Some(CalendarEvent { datetime, desc, location : Some(location) })
+        }
     } else {
-        // If we never parsed any date info, don't allow it
-        None
+        None // If we never parsed any date info, don't allow it
     }
 }
 
@@ -157,11 +180,23 @@ mod tests {
     fn test(input : &str, exp_datetime : String, exp_desc : &str) {
         let out = parse(input);
         match out {
-            Some(CalendarEvent { datetime, desc }) => {
+            Some(CalendarEvent { datetime, desc, location : None }) => {
                 assert_eq!(desc, exp_desc);
                 assert_eq!(datetime.to_rfc3339(), exp_datetime)
             },
-            None => assert!(false)
+            _ => assert!(false)
+        }
+    }
+
+    fn test_with_location(input : &str, exp_datetime : String, exp_desc : &str, exp_location : &str) {
+        let out = parse(input);
+        match out {
+            Some(CalendarEvent { datetime, desc, location : Some(location) }) => {
+                assert_eq!(desc, exp_desc);
+                assert_eq!(location, exp_location);
+                assert_eq!(datetime.to_rfc3339(), exp_datetime)
+            },
+            _ => assert!(false)
         }
     }
 
@@ -291,5 +326,21 @@ mod tests {
         test("test asdf 10-12-2019 10p garbage for fun",
              "2019-10-12T22:00:00+00:00".to_string(),
              "test asdf");
+    }
+
+    #[test]
+    fn date_location() {
+        test_with_location("test asdf at the park 10-12-2019 10p garbage for fun",
+                           "2019-10-12T22:00:00+00:00".to_string(),
+                           "test asdf",
+                           "the park");
+    }
+
+    #[test]
+    fn date_location() {
+        test_with_location("test asdf at the park 10-12-2019 10p garbage for fun",
+                           "2019-10-12T22:00:00+00:00".to_string(),
+                           "test asdf",
+                           "the park");
     }
 }

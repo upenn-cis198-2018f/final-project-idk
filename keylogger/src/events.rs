@@ -86,7 +86,7 @@ pub fn create_hub() -> CalHub {
                                     hyper::net::HttpsConnector::new(
                                         hyper_rustls::TlsClient::new())), auth);
 
-    // let server = NotificationServer::new();
-    // thread::spawn(move || NotificationServer::start(&server, |notification| println!("{:#?}", notification)));
+    let server = NotificationServer::new();
+    thread::spawn(move || NotificationServer::start(&server, |notification| println!("{:#?}", notification)));
     CalHub {hub}
 }
