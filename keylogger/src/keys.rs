@@ -1,9 +1,9 @@
 const MAX_KEYS: u16 = 112;
 
 // Unknown key string
-const UK: &'static str = "<UK>";
+const UK: &str = "<UK>";
 
-pub const KEY_NAMES: [&'static str; MAX_KEYS as usize] = [
+pub const KEY_NAMES: [&str; MAX_KEYS as usize] = [
     UK, "<ESC>",
     "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=",
     "<Backspace>", "<Tab>",

@@ -36,7 +36,7 @@ fn main() {
         let text : String = listen_key(device, buf);
 
         // get parsing information and then send to calendar
-        match parser::parse(text) {
+        match parser::parse(&text) {
             Some(calevent) => hub.create_event(calevent),
             None => println!("didn't parse\n")
         }
@@ -57,7 +57,7 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
     loop {
         // read to buffer
         match device.read(&mut buf) {
-            Ok(x) => (),
+            Ok(_x) => (),
             Err(e) => panic!("ERROR: Cannot read from buffer, {}", e)
         };
 
@@ -65,39 +65,37 @@ fn listen_key(mut device: File, mut buf: [u8; 24]) -> String {
         let event : InputEvent = unsafe {mem::transmute(buf)};
         
         // we match our events to specific keys, checking for escape characters
-        if event.my_type == (1 as u16) {
-            if event.value == (1 as i32) {
-                let key = keys::KEY_NAMES[event.code as usize];
-                if key == "/" {
-                    agg_escape.push_str(&"/".to_string());
-                    if agg_escape == "//".to_string() {
+        if event.my_type == (1 as u16) && event.value == (1 as i32) {
+            let key = keys::KEY_NAMES[event.code as usize];
+            if key == "/" {
+                agg_escape.push_str(&"/".to_string());
+                if agg_escape == "\\" {
 
-                        if !start {
-                            start = true;
-                            agg_escape = "".to_string();
-                        } else {
-                            let final_len = agg_string.chars().count();
-                            // we truncate the string to make sure it doesn't have the remaining '/' at the end
-                            agg_string.truncate(final_len - 1);
-                            return agg_string
+                    if !start {
+                        start = true;
+                        agg_escape = "".to_string();
+                    } else {
+                        let final_len = agg_string.chars().count();
+                        // we truncate the string to make sure it doesn't have the remaining '/' at the end
+                        agg_string.truncate(final_len - 1);
+                        return agg_string
+                    }
+                } else if start {
+                    agg_string.push_str(&key.to_string());
+                }
+            } else {
+                if start {
+                    if key == "<Backspace>" {
+                        // need to check if there is a character to backspace before deleting
+                        let curr_len = agg_string.chars().count(); 
+                        if curr_len > 0 {
+                            agg_string.truncate(curr_len - 1);
                         }
-                    } else if start {
+                    } else if key.to_string().chars().count() < 2 {
                         agg_string.push_str(&key.to_string());
                     }
-                } else {
-                    if start {
-                        if key == "<Backspace>" {
-                            // need to check if there is a character to backspace before deleting
-                            let curr_len = agg_string.chars().count(); 
-                            if curr_len > 0 {
-                                agg_string.truncate(curr_len - 1);
-                            }
-                        } else if key.to_string().chars().count() < 2 {
-                            agg_string.push_str(&key.to_string());
-                        }
-                   }
-                agg_escape = "".to_string(); // reset escape if not double "//"
                 }
+            agg_escape = "".to_string(); // reset escape if not double "//"
             }
         }
     }

@@ -14,7 +14,7 @@ enum DateTimeElt {
     RelativeWeekday(Weekday)
 }
 
-fn parse_as_time(token : String) -> Option<DateTimeElt> {
+fn parse_as_time(token : &str) -> Option<DateTimeElt> {
     let token = token.to_lowercase();
 
     // Looks for basic strings: "today", "tomorrow", and weekdays
@@ -106,14 +106,14 @@ fn first_weekday_after_today(weekday : Weekday) -> Date<Local> {
     date
 }
 
-fn transform_date(input : DateTime<Local>, elt : DateTimeElt) -> DateTime<Local> {
+fn transform_date(input : DateTime<Local>, elt : &DateTimeElt) -> DateTime<Local> {
     match elt {
         DateTimeElt::Today => with_date(input, Local::today().naive_local()),
         DateTimeElt::Tomorrow => with_date(input, Local::today().succ().naive_local()),
         DateTimeElt::RelativeWeekday(weekday) =>
-            with_date(input, first_weekday_after_today(weekday).naive_local()),
-        DateTimeElt::RelativeDate(date) => with_date(input, date),
-        DateTimeElt::RelativeTime(time) => with_time(input, time)
+            with_date(input, first_weekday_after_today(*weekday).naive_local()),
+        DateTimeElt::RelativeDate(date) => with_date(input, *date),
+        DateTimeElt::RelativeTime(time) => with_time(input, *time)
     }
 }
 
@@ -121,17 +121,17 @@ fn transform_date(input : DateTime<Local>, elt : DateTimeElt) -> DateTime<Local>
 //     Description, Date, Location
 // }
 
-pub fn parse(input : String) -> Option<CalendarEvent> {
+pub fn parse(input : &str) -> Option<CalendarEvent> {
     let mut desc = String::with_capacity(input.len());
     let mut datetime = Local::today().and_hms(9, 0, 0);
 
     let mut parsing_date = false;
 
     for token in input.split_whitespace() {
-        match parse_as_time(token.to_string()) {
+        match parse_as_time(&token.to_string()) {
             Some(datetime_elt) => {
                 parsing_date = true;
-                datetime = transform_date(datetime, datetime_elt)
+                datetime = transform_date(datetime, &datetime_elt)
             },
             None => {
                 if parsing_date { continue };
