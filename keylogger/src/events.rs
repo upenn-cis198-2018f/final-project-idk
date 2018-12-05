@@ -20,10 +20,13 @@ pub struct CalHub {
 
 impl CalHub {
     pub fn create_event(&self, cal_event : super::parser::CalendarEvent) {
-        let date = cal_event.datetime.to_rfc3339();
-        let end = (cal_event.datetime + chrono::Duration::hours(1)).to_rfc3339();
+        let start = cal_event.start_time.to_rfc3339();
+        let end = match cal_event.end_time {
+            Some(time) => time.to_rfc3339(),
+            None => (cal_event.start_time + chrono::Duration::hours(1)).to_rfc3339()
+        };
 
-        let event_date = EventDateTime{date_time: Some(date),
+        let event_date = EventDateTime{date_time: Some(start),
                                            time_zone: Some("America/Atikokan".to_string()),
                                            date: None};
 

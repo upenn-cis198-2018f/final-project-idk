@@ -2,7 +2,8 @@ use chrono::prelude::*;
 use regex::{ Regex };
 
 pub struct CalendarEvent {
-    pub datetime: DateTime<Local>,
+    pub start_time: DateTime<Local>,
+    pub end_time: Option<DateTime<Local>>,
     pub desc: String,
     pub location: Option<String>
 }
@@ -13,6 +14,19 @@ enum DateTimeElt {
     Today,
     Tomorrow,
     RelativeWeekday(Weekday)
+}
+
+fn parse_month(token : &str) -> Option<u32> {
+    if token.len() < 3 {
+        return None
+    };
+
+    match &token[0..3] {
+        "jan" => Some(1), "feb" => Some(2), "mar" => Some(3), "apr" => Some(4),
+        "may" => Some(5), "jun" => Some(6), "jul" => Some(7), "aug" => Some(8),
+        "sep" => Some(9), "oct" => Some(10), "nov" => Some(11), "dec" => Some(12),
+        _ => None
+    }
 }
 
 fn parse_as_time(token : &str) -> Option<DateTimeElt> {
@@ -79,6 +93,17 @@ fn parse_as_time(token : &str) -> Option<DateTimeElt> {
         }
     }
 
+    // Parses for a date of the form (monthname)(day)
+    if let Some(caps) = DATE2.captures(token.as_str()) {
+        if let Some(month) = parse_month(caps.get(1).unwrap().as_str()) {
+            let day = caps.get(2).unwrap().as_str().parse::<u32>().unwrap();
+            let year = Local::today().year();
+            if let Some(time) = NaiveDate::from_ymd_opt(year, month, day) {
+                return Some(DateTimeElt::RelativeDate(time));
+            }
+        }
+    }
+
     None
 }
 
@@ -119,30 +144,53 @@ fn transform_date(input : DateTime<Local>, elt : &DateTimeElt) -> DateTime<Local
 }
 
 enum ParseTarget {
-    Description, Date, Location
+    Description, StartDate, EndDate, Location
 }
 
 pub fn parse(input : &str) -> Option<CalendarEvent> {
     // Empty strings to hold return values
     let mut desc = String::with_capacity(input.len());
     let mut location = String::new();
-    let mut datetime = Local::today().and_hms(9, 0, 0);
+    let mut start_time = Local::today().and_hms(9, 0, 0);
+    let mut end_time = Local::today().and_hms(9, 0, 0);
 
     let mut parsing_target = ParseTarget::Description;
-    let mut changed_time = false;
+    let mut changed_start_time = false;
+    let mut changed_end_time = false;
 
     for token in input.split_whitespace() {
         // Attempts to parse each token as a time
         // Unsuccesful parses are added to location/description
         match parse_as_time(&token.to_string()) {
             Some(datetime_elt) => {
-                parsing_target = ParseTarget::Date;
-                datetime = transform_date(datetime, &datetime_elt);
-                changed_time = true;
+                match parsing_target {
+                    ParseTarget::EndDate => {
+                        println!("in this bitch");
+                        end_time = transform_date(end_time, &datetime_elt);
+                        changed_end_time = true;
+                    }
+                    _ => {
+                        println!("in this bitch2");
+                        parsing_target = ParseTarget::StartDate;
+                        start_time = transform_date(start_time, &datetime_elt);
+                        changed_start_time = true;
+                        if !changed_end_time {
+                            end_time = transform_date(end_time, &datetime_elt);
+                        }
+                    }
+                };
             },
             None => {
                 if token == "at" {
+                    // The keyword "at" triggers us to begin writing to the location field
                     parsing_target = ParseTarget::Location;
+                    continue
+                }
+                if token == "to" && changed_start_time {
+                    println!("in this bitch3");
+                    // If we have already begun parsing a start time and we see the token
+                    // "to", begin parsing an end time
+                    parsing_target = ParseTarget::EndDate;
                     continue
                 }
                 match parsing_target {
@@ -154,20 +202,27 @@ pub fn parse(input : &str) -> Option<CalendarEvent> {
                         location.push_str(token);
                         location.push(' ')
                     }
-                    ParseTarget::Date => continue,
+                    // Ignore non-date tokens while parsing a date
+                    _ => continue,
                 }
             }
         }
     }
 
-    if changed_time {
+    if changed_start_time {
         desc.pop(); // Remove extra ' ' from end
-        if location.is_empty() {
-            Some(CalendarEvent { datetime, desc, location : None })
+        let end_time = if changed_end_time {
+            Some(end_time)
+        } else {
+            None
+        };
+        let location = if location.is_empty() {
+            None
         } else {
             location.pop();
-            Some(CalendarEvent { datetime, desc, location : Some(location) })
-        }
+            Some(location)
+        };
+        Some( CalendarEvent { start_time, end_time, desc, location })
     } else {
         None // If we never parsed any date info, don't allow it
     }
@@ -180,21 +235,30 @@ mod tests {
     fn test(input : &str, exp_datetime : String, exp_desc : &str) {
         let out = parse(input);
         match out {
-            Some(CalendarEvent { datetime, desc, location : None }) => {
+            Some(CalendarEvent { start_time, end_time : None, desc, location : None }) => {
                 assert_eq!(desc, exp_desc);
-                assert_eq!(datetime.to_rfc3339(), exp_datetime)
+                assert_eq!(start_time.to_rfc3339(), exp_datetime)
             },
             _ => assert!(false)
         }
     }
 
-    fn test_with_location(input : &str, exp_datetime : String, exp_desc : &str, exp_location : &str) {
+    fn test_with_addl_fields(input : &str, exp_starttime : String, exp_endtime : String,
+                             exp_desc : &str, exp_location : &str) {
         let out = parse(input);
         match out {
-            Some(CalendarEvent { datetime, desc, location : Some(location) }) => {
+            Some(CalendarEvent { start_time, end_time : Some(end_time),
+                                 desc, location : Some(location) }) => {
                 assert_eq!(desc, exp_desc);
                 assert_eq!(location, exp_location);
-                assert_eq!(datetime.to_rfc3339(), exp_datetime)
+                assert_eq!(start_time.to_rfc3339(), exp_starttime);
+                assert_eq!(end_time.to_rfc3339(), exp_endtime)
+            },
+            Some(CalendarEvent { start_time, end_time : None,
+                                 desc, location : Some(location) }) => {
+                assert_eq!(desc, exp_desc);
+                assert_eq!(location, exp_location);
+                assert_eq!(start_time.to_rfc3339(), exp_starttime);
             },
             _ => assert!(false)
         }
@@ -293,6 +357,7 @@ mod tests {
         failing_test("test 8pasdf");
     }
 
+    // This will fail in the future. Sorry!
     #[test]
     fn weekday1() {
         test("test sun",
@@ -300,6 +365,7 @@ mod tests {
              "test");
     }
 
+    // This will fail in the future. Sorry!
     #[test]
     fn weekday2() {
         test("test monday 10p",
@@ -329,18 +395,55 @@ mod tests {
     }
 
     #[test]
-    fn date_location() {
-        test_with_location("test asdf at the park 10-12-2019 10p garbage for fun",
-                           "2019-10-12T22:00:00+00:00".to_string(),
-                           "test asdf",
-                           "the park");
+    fn date_other_format() {
+        test("test jan12 10p",
+             "2018-01-12T22:00:00+00:00".to_string(),
+             "test");
+    }
+
+    #[test]
+    fn date_other_format2() {
+        test("test tomorrow asdf apr23 10p",
+             "2018-04-23T22:00:00+00:00".to_string(),
+             "test");
     }
 
     #[test]
     fn date_location() {
-        test_with_location("test asdf at the park 10-12-2019 10p garbage for fun",
-                           "2019-10-12T22:00:00+00:00".to_string(),
-                           "test asdf",
-                           "the park");
+        test_with_addl_fields("test asdf at the park 10-12-2019 10p garbage for fun",
+                              "2019-10-12T22:00:00+00:00".to_string(),
+                              "".to_string(),
+                              "test asdf",
+                              "the park");
+    }
+
+    #[test]
+    fn date_location2() {
+        test_with_addl_fields("test asdf at the park 10-12-2019 10p garbage for fun",
+                              "2019-10-12T22:00:00+00:00".to_string(),
+                              "".to_string(),
+                              "test asdf",
+                              "the park",
+        );
+    }
+
+    #[test]
+    fn date_end_time() {
+        test_with_addl_fields("test asdf at the park 10-12-2019 10p to 10:30p garbage for fun",
+                              "2019-10-12T22:00:00+00:00".to_string(),
+                              "2019-10-12T22:30:00+00:00".to_string(),
+                              "test asdf",
+                              "the park",
+        );
+    }
+
+    #[test]
+    fn date_end_time_random_to() {
+        test_with_addl_fields("take jenny to park at greens tomorrow 6am to 10:30p garbage for fun",
+                              Local::today().succ().and_hms(6, 0, 0).to_rfc3339(),
+                              Local::today().succ().and_hms(22, 30, 0).to_rfc3339(),
+                              "take jenny to park",
+                              "greens",
+        );
     }
 }
