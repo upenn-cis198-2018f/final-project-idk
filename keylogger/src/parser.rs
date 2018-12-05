@@ -2,8 +2,8 @@ use chrono::prelude::*;
 use regex::{ Regex };
 
 pub struct CalendarEvent {
-    datetime: DateTime<Local>,
-    desc: String,
+    pub datetime: DateTime<Local>,
+    pub desc: String,
 }
 
 enum DateTimeElt {
