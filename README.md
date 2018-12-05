@@ -1,6 +1,6 @@
 ## Rust Cal Watcher
 
-Rust Cal Watcher is a google-calendar centric utility meant to make scheduling appointments easier. It acts as a keylogger, waiting for the trigger key pattern ("//" by default) to be pressed, at which point, it logs all keys pressed before a second input of the trigger key pattern. If valid, the resulting input is then made into a google calendar event and added to the user's calendar.
+Rust Cal Watcher is a google-calendar centric utility meant to make scheduling appointments easier. It acts as a keylogger, waiting for the trigger key pattern ("\\\\" by default) to be pressed, at which point, it logs all keys pressed before a second input of the trigger key pattern. If valid, the resulting input is then made into a google calendar event and added to the user's calendar.
 
 ## State of the project
 
