@@ -13,10 +13,10 @@ use events::oauth2::{Authenticator, FlowType, ApplicationSecret, DiskTokenStorag
 use std::option::Option;
 use events::hyper::status::{StatusClass, StatusCode};
 use events::hyper::client::response::Response;
-
+ 
 struct CalHub {
-    hub: calendar3::CalendarHub<hyper::Client,
-         Authenticator<DefaultAuthenticatorDelegate,
+    hub: calendar3::CalendarHub<hyper::Client, 
+         Authenticator<DefaultAuthenticatorDelegate, 
          MemoryStorage, hyper::Client>>,
 }
 
@@ -25,7 +25,7 @@ impl CalHub {
     fn create_hub() -> CalHub {
         const CLIENT_SECRET_FILE: &'static str = "client_id.json";
         let secret: ApplicationSecret = read_client_secret(CLIENT_SECRET_FILE.to_string());
-
+        
         let auth = Authenticator::new(&secret, DefaultAuthenticatorDelegate,
                                 hyper::Client::with_connector(hyper::net::HttpsConnector::new(hyper_rustls::TlsClient::new())),
                                 <MemoryStorage as Default>::default(), None);
@@ -36,11 +36,11 @@ impl CalHub {
     }
 
     fn create_event(&self, date: String, end: String, descrip: String) {
-        let mut event_date = EventDateTime{date_time: Some(date),
-                                           time_zone: Some("America/Atikokan".to_string()),
+        let mut event_date = EventDateTime{date_time: Some(date), 
+                                           time_zone: Some("America/Atikokan".to_string()), 
                                            date: None};
-        let mut end_date = EventDateTime{date_time: Some(end),
-                                         time_zone: Some("America/Atikokan".to_string()),
+        let mut end_date = EventDateTime{date_time: Some(end), 
+                                         time_zone: Some("America/Atikokan".to_string()), 
                                          date: None};
         let mut event = Event::default();
         event.start = Some(event_date);

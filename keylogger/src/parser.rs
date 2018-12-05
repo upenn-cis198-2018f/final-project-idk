@@ -3,7 +3,7 @@ use regex::{ Regex };
 
 pub struct CalendarEvent {
     datetime: DateTime<Local>,
-    desc: String
+    desc: String,
 }
 
 enum DateTimeElt {
@@ -31,6 +31,7 @@ fn parse_as_time(token : String) -> Option<DateTimeElt> {
         static ref AM : Regex = Regex::new(r"^(\d{1, 2})(:(\d{2}))?am?$").unwrap();
         static ref PM : Regex = Regex::new(r"^(\d{1, 2})(:(\d{2}))?pm?$").unwrap();
         static ref DATE : Regex = Regex::new(r"^(\d{1, 2})[-/](\d{1, 2})([-/]\d{4})?$").unwrap();
+        // static ref DATE2 : Regex = Regex::new(r"^([a-z]+)(\d{1, 2})$").unwrap();
     }
 
     // Parses for a time of the form __am or __:__am
@@ -99,10 +100,8 @@ fn first_weekday_after_today(weekday : Weekday) -> Date<Local> {
     let todays_weekday = Local::today().weekday();
     let num_days_from_monday = (7 + weekday.num_days_from_monday() - todays_weekday.num_days_from_monday()) % 7;
     let mut date = Local::today();
-    let mut i = 0;
-    while i < num_days_from_monday {
+    for _ in 0..num_days_from_monday {
         date = date.succ();
-        i += 1
     };
     date
 }
@@ -118,11 +117,16 @@ fn transform_date(input : DateTime<Local>, elt : DateTimeElt) -> DateTime<Local>
     }
 }
 
+// enum ParseTarget {
+//     Description, Date, Location
+// }
+
 pub fn parse(input : &str) -> Option<CalendarEvent> {
     let mut desc = String::with_capacity(input.len());
     let mut datetime = Local::today().and_hms(9, 0, 0);
 
     let mut parsing_date = false;
+
     for token in input.split_whitespace() {
         match parse_as_time(token.to_string()) {
             Some(datetime_elt) => {
